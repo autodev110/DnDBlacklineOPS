@@ -15,15 +15,15 @@ type FetchState = {
   isLoading: boolean;
 };
 
-function formatNumber(value: number | null, options?: Intl.NumberFormatOptions) {
-  if (value === null || Number.isNaN(value)) {
+function formatNumber(value?: number | null, options?: Intl.NumberFormatOptions) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
     return "—";
   }
   return new Intl.NumberFormat("en-US", options).format(value);
 }
 
-function formatDurationMs(value: number | null) {
-  if (value === null) {
+function formatDurationMs(value?: number | null) {
+  if (value === null || value === undefined) {
     return "—";
   }
   if (value >= 1000) {
@@ -32,14 +32,14 @@ function formatDurationMs(value: number | null) {
   return `${Math.round(value)} ms`;
 }
 
-function formatPercentage(value: number | null) {
-  if (value === null) {
+function formatPercentage(value?: number | null) {
+  if (value === null || value === undefined) {
     return "—";
   }
   return `${(value * 100).toFixed(1)}%`;
 }
 
-function formatTimestamp(timestamp: number | null) {
+function formatTimestamp(timestamp?: number | null) {
   if (!timestamp) {
     return "—";
   }
