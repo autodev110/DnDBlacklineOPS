@@ -1,0 +1,204 @@
+Generate a complete Official and Professional “Residential Investment Proposal” Document in LaTeX format, following the template exactly as written below.
+Your output must be a **fully compile-ready LaTeX document** — no commentary, no placeholders like `.∗?.*?.∗?{index=\d+}`, and no citation or reference artifacts.  
+Perform a **deep property data search** using credible public sources (Zillow, Realtor, Redfin, county records) to accurately populate all fields.  
+
+Objective
+{
+Your goal is to demonstrate strong profit margin potential for the target address property.
+Maintain a **professional, data-driven, and analytical tone** suitable for an investor memorandum, emphasizing upside potential, comparative value, and profit justification.  
+All comparable data, narrative, and quantitative reasoning must reinforce **why the property offers a strong ROI and post-rehab appreciation potential.**
+}
+
+Variable Definitions
+{
+Target Address: { 15 Ann St, Pottsville, PA 17901 },
+Target Selling Price: { $40,000 }  
+Earnest Deposit: { $500 }  
+Inspection/Closing Period (days): { 30 }  
+Parcel ID: { [parcel number or “TBD”] }  
+// For all other property variables (type, size, taxes, condition, year built, etc.),
+// gather accurate details via deep property data lookup from public sources such as Zillow, Realtor, or Redfin.
+}
+
+Investor Comparables  
+{
+Find **3–4 comparable properties** within a 5–15-mile radius that have **sold in the past 18–24 months** and are **significantly more expensive** than the {Target Address}  property.  
+Each comparable must support a higher After-Repair Value (ARV) justification.  
+Comps must have **similar size, lot area, and bed/bath configuration**.  
+Ensure all are priced **no lower than the Target Selling Price** to demonstrate strong profit margin potential.
+}
+LaTeX Safety Rules:
+{
+Do not use inline math mode ($...$) for approximate symbols, units, or numbers.
+Use \textasciitilde instead of $\sim$ for “approximately.”
+All \item commands must appear only inside proper list environments (itemize, enumerate, etc.), and never inside math mode.
+Ensure all math environments ($ or \[) are properly opened and closed on the same line.
+Ensure all indentation and whitespace uses only the standard ASCII space character ($\text{U+0020}$). Do not use any Unicode non-breaking spaces or thin spaces for alignment.
+}
+---
+
+LATEX TEMPLATE:
+
+\documentclass[12pt,a4paper]{article}
+
+% --- PERFORMANCE TOGGLE -----------------------------------------------------
+\newif\iffastcompile
+\fastcompilefalse % set to true for draft builds without hyperlinks
+
+% --- PACKAGES ---------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{titlesec}
+
+% --- LAYOUT SETTINGS --------------------------------------------------------
+\geometry{margin=1in}
+\setstretch{1.15}
+\raggedbottom
+\emergencystretch=1em
+
+% --- COLORS -----------------------------------------------------------------
+\definecolor{titleblue}{RGB}{25,45,75}
+\definecolor{sectiongray}{RGB}{70,70,70}
+\definecolor{accentred}{RGB}{180,30,30}
+
+% --- TITLE FORMATTING -------------------------------------------------------
+\titleformat{\section}
+  {\color{titleblue}\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}
+  {\color{sectiongray}\normalfont\bfseries}{\thesubsection}{1em}{}
+
+% --- HYPERREF ---------------------------------------------------------------
+\PassOptionsToPackage{hyphens}{url}
+\usepackage[
+  pdfencoding=auto,
+  pdfborder={0 0 0},
+  pdfusetitle
+]{hyperref}
+\pdfstringdefDisableCommands{\def\textcolor#1#2{#2}}
+\iffastcompile
+  \hypersetup{draft}
+\else
+  \hypersetup{hidelinks}
+\fi
+\pdfcompresslevel=9
+\pdfobjcompresslevel=3
+
+% --- DOCUMENT BODY ----------------------------------------------------------
+\begin{document}
+
+\begin{center}
+\vspace*{0.4cm}
+{\fontsize{20}{22}\selectfont\bfseries Residential Investment Proposal}\\[8pt]
+{\large\textcolor{sectiongray}{Feasibility and Data-Driven Profitability Analysis}}\\[8pt]
+{\large\textcolor{sectiongray}{[Property Address, City, State ZIP]}}\\[4pt]
+\rule{0.9\linewidth}{0.6pt}
+\vspace{0.4cm}
+\end{center}
+
+\vspace{0.4cm}
+
+\noindent\textbf{Property Overview}
+\begin{itemize}
+  \item \textbf{Type:} [\# Beds / \# Baths — Property Type]
+  \item \textbf{Size:} $\sim$[Square Footage] sq ft \quad | \quad Built [Year Built]
+  \item \textbf{Construction:} [Roof Type / Exterior Type] \quad | \quad [\# Levels] Levels
+  \item \textbf{Annual Taxes:} \$[Tax Amount] (latest year available)
+  \item \textbf{Condition:} [Concise summary of current state—minor/moderate rehab, turnkey potential, etc.]
+\end{itemize}
+
+\vspace{0.4cm}
+
+\section*{Market Context \& Upside Potential}
+Comparable sales of similar [property type]s in [City or Region] demonstrate a clear upward trend in post-rehab valuations, with typical resale ranges between \textbf{\$[Low]–\$[High]}.
+
+\begin{itemize}
+  \item [Comparable 1 Address] — \textbf{\$[Price 1]} ([Date 1])
+  \item [Comparable 2 Address] — \textbf{\$[Price 2]} ([Date 2])
+  \item [Comparable 3 Address] — \textbf{\$[Price 3]} ([Date 3])
+  \item [Optional 4th] — \textbf{\$[Price 4]} ([Date 4])
+\end{itemize}
+
+These comps validate the property’s \textbf{After-Repair Value (ARV)} and justify a strong margin between acquisition and resale.
+
+\vspace{0.4cm}
+
+\section*{Value-Add and Improvement Scope}
+\begin{itemize}
+  \item \textbf{Renovation Potential:} [Outline key improvements: kitchens, baths, floors, roof, etc.]
+  \item \textbf{Projected Rehab Budget:} \$[Low Rehab]–\$[High Rehab]
+  \item \textbf{Timeline:} [Number] weeks average turnaround
+  \item \textbf{Exit Strategies:} Flip resale, BRRRR refinance, or rental stabilization
+\end{itemize}
+
+\vspace{0.4cm}
+
+\section*{Financial Summary and ROI}
+\begin{tabular}{@{}p{6cm}p{8cm}@{}}
+\toprule
+\textbf{Acquisition Price} & \$[Acquisition Price]\\
+\textbf{Rehab Budget} & \$[Rehab Range]\\
+\textbf{After-Repair Value (ARV)} & \$[ARV]\\
+\textbf{Gross Profit Potential} & \$[Profit Range]\\
+\textbf{Projected ROI} & [ROI Percentage]\% (based on total investment)\\
+\textbf{Estimated Timeline} & [Timeline Duration]\\
+\bottomrule
+\end{tabular}
+
+\vspace{0.4cm}
+
+\section*{Investor Proposition}
+This asset offers an opportunity to acquire below the intrinsic market floor and capitalize on a high-spread renovation margin.  
+Comparable renovated homes within the same corridor command resale prices exceeding \textbf{\$[Target Selling Price]}, reflecting a substantial markup over the subject’s acquisition basis.  
+Projected exit yields a strong double-digit return even under conservative ARV assumptions.
+
+\vspace{0.4cm}
+
+\section*{Comparable Sales (Supporting ARV)}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Address} & \textbf{Beds/Baths} & \textbf{Sale Price} & \textbf{Sale Date}\\
+\midrule
+[Comp 1 Address] & [Details] & \$[Price 1] & [Date 1]\\
+[Comp 2 Address] & [Details] & \$[Price 2] & [Date 2]\\
+[Comp 3 Address] & [Details] & \$[Price 3] & [Date 3]\\
+\bottomrule
+\end{tabular}
+
+\vspace{0.3cm}
+These sales confirm an achievable resale range of \textbf{\$[Low]–\$[High]}, aligning with the proposed ARV and validating the investment upside.
+
+\vspace{0.4cm}
+
+\section*{Conclusion \& Recommendation}
+[Property Address] presents a high-leverage acquisition positioned for value creation through targeted renovation.  
+With conservative inputs and verified market comps, the investor’s margin remains substantial even under moderate cost inflation.  
+Acquisition at \$[Target Acquisition Price] and disposition near \$[Target Selling Price] is supported by both market comparables and income potential.
+
+\vspace{0.6cm}
+
+\section*{Execution and Signatures}
+\vspace{0.4cm}
+\noindent Seller: \rule{6cm}{0.4pt} \hfill Date: \rule{3cm}{0.4pt}\\[6pt]
+Buyer/Investor: \rule{6cm}{0.4pt} \hfill Date: \rule{3cm}{0.4pt}\\[6pt]
+Broker/Agent (Dominic Julian): \rule{6cm}{0.4pt} \hfill Date: \rule{3cm}{0.4pt}
+
+\vspace{0.6cm}
+\noindent\textit{Prepared by:} \textbf{Dominic Julian — Iron Valley Real Estate Keystone}\\
+\textit{Licensed Realtor® (PA)}\\[3pt]
+\textbf{Note:} Intended for investor proposal and due diligence purposes only. Final contracts subject to legal and title review.
+
+\vspace{0.6cm}
+\begin{center}
+\textit{\color{accentred}“Every undervalued property hides a high-yield opportunity.”}
+\end{center}
+
+\end{document}
+
+

@@ -1,0 +1,283 @@
+Generate a complete Official and Professional “Residential Acquisition” Document for the specified target property in LaTeX format using the provided template exactly as written.
+Your output must be the full, compile-ready LaTeX document with no commentary or explanation outside the code block.
+Perform a deep property data search using publicly available sources (Zillow, Realtor, Redfin, etc.) to accurately populate all fields.
+Maintain a professional, data-driven, and analytical tone as if written by a real estate acquisitions analyst preparing an investor memorandum.
+Do not include any placeholder artifacts such as .∗?.*?.∗?{index=\d+} in your output.
+Objective
+{
+Your goal is to justify a lower purchase price by presenting credible, data-supported analysis that demonstrates the property is overvalued or can be acquired below the distressed-market floor.
+All comparable data and narrative must reinforce negotiation leverage in favor of a discounted acquisition.
+}
+Variable Definitions
+ {
+ Target Address: { 15 Ann St, Pottsville, PA 17901 },
+ Target Acquisition Price: { $20,000 - $25,000 max },
+ Earnest Deposit: { $500 },
+ Inspection/Closing Period (days): { 30 },
+ Parcel ID: { TBD },
+// For all other property variables (type, size, taxes, condition, year built, etc.),
+// gather accurate details via deep property data lookup from public sources such as Zillow, Realtor, or Redfin.
+ }
+Acquisition Comps Selection Logic (Strict Rules)
+{
+Find 3–4 comparable single-family or row homes sold within the past 18–24 months and within a 5–15 mile radius of the subject.
+Comps must meet all of the following:
+Be in similar or worse condition (distressed, fixer-upper, “as-is”).
+Be equal to or cheaper than the Target Acquisition Price (≤ $17,000).
+If no cheaper comps exist, include only the closest-in-condition ones, and clearly explain that their higher price reinforces the negotiation case.
+}
+Explicit Rules:
+{
+Exclude luxury, turnkey, or fully renovated comps that skew prices upward.
+Omit any comp exceeding the target price by more than 25%.
+Prefer listings labeled “needs work,” “investor special,” “as-is,” or “cash only.”
+Ensure all comp commentary supports a downward value adjustment and highlights value-add potential.
+}
+Narrative Requirements
+{
+In the written sections:
+Clearly conclude that comparable properties are trading at or below the target price.
+State that the subject should be acquired for an amount equal to or less than the current offer.
+Emphasize distress factors, market liquidity risk, and repair costs as key drivers for valuation reduction.
+Maintain factual precision and concise financial reasoning throughout.
+}
+
+LaTeX Safety Rules:
+{
+Do not use inline math mode ($...$) for approximate symbols, units, or numbers.
+Use \textasciitilde instead of $\sim$ for “approximately.”
+All \item commands must appear only inside proper list environments (itemize, enumerate, etc.), and never inside math mode.
+Ensure all math environments ($ or \[) are properly opened and closed on the same line.
+Ensure all indentation and whitespace uses only the standard ASCII space character ($\text{U+0020}$). Do not use any Unicode non-breaking spaces or thin spaces for alignment.
+}
+
+Final Output Requirement:
+{ 
+Deliver the complete, ready-to-compile LaTeX document only, following the provided template exactly.
+No explanations, summaries, or commentary should appear outside or inside the LaTeX code block, and absolutely no references or citations should appear in the output. I need a latex code block as the output.
+Use the LaTeX template below exactly as written.
+Populate all placeholders with real property and comp data according to the rules above.
+Ensure all comparables and market commentary *support negotiation leverage* by demonstrating that the subject is overvalued or can be acquired below market.
+Include no text outside the LaTeX code block. Always follow latex rules such as ‘\&’ instead of ‘&’
+}
+
+
+LATEX TEMPLATE:
+
+\documentclass[12pt,a4paper]{article}
+
+% --- SPEED/ROBUSTNESS TOGGLES -----------------------------------------------
+\newif\iffastcompile
+% Flip this to \fastcompiletrue for fastest compiles while drafting.
+% (Keeps layout/format; only disables creating hyperlinks in the PDF.)
+\fastcompilefalse
+
+% --- FONTS & BASICS ----------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc} % better hyphenation + smaller TOC/bookmarks overhead
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{xcolor}
+
+% --- PAGE & SPACING ----------------------------------------------------------
+\geometry{margin=1in}
+\setstretch{1.15}
+\raggedbottom % slightly less vertical page-fitting work for TeX
+\emergencystretch=1em
+
+% --- TITLES ------------------------------------------------------------------
+\usepackage{titlesec}
+\definecolor{titleblue}{RGB}{25,45,75}
+\definecolor{sectiongray}{RGB}{70,70,70}
+\definecolor{accentred}{RGB}{180,30,30}
+
+\titleformat{\section}
+  {\color{titleblue}\normalfont\Large\bfseries}
+  {\thesection}{1em}{}
+\titleformat{\subsection}
+  {\color{sectiongray}\normalfont\bfseries}
+  {\thesubsection}{1em}{}
+
+% --- TABLES ------------------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{tabularx}
+
+% --- HYPERREF (LAST) ---------------------------------------------------------
+\PassOptionsToPackage{hyphens}{url}
+\usepackage[
+  pdfencoding=auto,
+  pdfborder={0 0 0},
+  pdfusetitle
+]{hyperref}
+
+% --- FIX: Declare missing Unicode chars (thin space, en dash, etc.)
+\DeclareUnicodeCharacter{2009}{ } % thin space
+\DeclareUnicodeCharacter{2013}{--} % en dash
+\DeclareUnicodeCharacter{2014}{---} % em dash
+\DeclareUnicodeCharacter{202F}{ } % narrow no-break space
+
+% Faster, more robust bookmark handling than hyperref alone
+\usepackage{bookmark}
+
+% When headings contain colored text, tell hyperref what to write in bookmarks
+\pdfstringdefDisableCommands{%
+  \def\textcolor#1#2{#2}%
+}
+
+% Draft/fast mode: disable link creation (layout unchanged)
+\iffastcompile
+  \hypersetup{draft}
+\else
+  \hypersetup{hidelinks}
+\fi
+\pdfsuppresswarningpagegroup=1
+
+% Tiny PDF engine tweaks (harmless; can reduce I/O work a bit)
+\pdfcompresslevel=9
+\pdfobjcompresslevel=3
+
+\begin{document}
+
+\begin{center}
+\vspace*{0.4cm}
+{\fontsize{20}{22}\selectfont\bfseries Residential Acquisition}\\[10pt]
+{\large\textcolor{sectiongray}{[Property Address, City, State ZIP]}}\\[4pt]
+\rule{0.9\linewidth}{0.6pt}
+\vspace{0.3cm}
+\end{center}
+
+\vspace{0.4cm}
+
+\noindent\textbf{Property Overview}
+\begin{itemize}
+  \item \textbf{Type:} [\# Beds / \# Baths — Property Type (e.g., Townhouse, Detached, etc.)]
+  \item \textbf{Size:} $\sim$[Square Footage] sq ft \quad | \quad Built [Year Built]
+  \item \textbf{Construction:} [Roof Type / Exterior Type] \quad | \quad [\# of Levels] Levels
+  \item \textbf{Annual Taxes:} \$[Tax Amount]
+  \item \textbf{Condition:} [Brief description of current condition and major issues]
+\end{itemize}
+
+\vspace{0.4cm}
+
+\section*{Market Context \& Actual Value Floor}
+Recent floor comparables for similar distressed [Property Type]s in [City or Neighborhood] typically sell between \textbf{\$[Low Range]–\$[High Range]}:
+
+\begin{itemize}
+  \item {}[Comparable 1 Address] — \textbf{\$[Price 1]}
+  \item {}[Comparable 2 Address] — \textbf{\$[Price 2]}
+  \item {}[Comparable 3 Address] — \textbf{\$[Price 3]}
+\end{itemize}
+
+These figures reflect true market-clearing values for semi-distressed cash properties. Based on [subject property's] condition, \textbf{its fair market value likely sits within or below this range}.
+
+\vspace{0.4cm}
+
+\section*{Specific Risk Items}
+\begin{itemize}
+  \item \textbf{Heating System:} [Condition and estimated cost if known]
+  \item \textbf{Electrical System:} [Condition and estimated cost if known]
+  \item \textbf{Plumbing / Service Panel:} [Condition and estimated cost if known]
+  \item \textbf{Windows / Roof:} [Condition and estimated lifespan]
+  \item \textbf{Liquidity Risk:} [Description of resale or financing limitations]
+\end{itemize}
+
+\vspace{0.4cm}
+
+\section*{Acquisition Framework}
+\textbf{Target Offer Range:} \$[Low Offer]–\$[High Offer]\\
+\textbf{Maximum Allowable Offer (MAO):} \textbf{\$[MAO Amount]}
+
+\vspace{0.4cm}
+
+\section*{Contract Structure}
+\begin{itemize}
+  \item Offer \textbf{As-Is}; seller makes no repairs.
+  \item Include \textbf{assignability clause} for wholesale disposition.
+  \item \textbf{Inspection period:} [\# of days, e.g., 14 business days].
+  \item \textbf{Closing:} [\# of days, e.g., 30 days] post-clear title (cash basis).
+  \item \textbf{Earnest Money:} \$[Earnest Deposit].
+\end{itemize}
+
+\vspace{0.5cm}
+
+\section*{Comparable Sales (As-Is Floor)}
+
+\begin{tabularx}{\textwidth}{X c c c}
+\toprule
+\textbf{Address} & \textbf{Beds/Baths} & \textbf{Sale Price} & \textbf{Sale Date}\\
+\midrule
+{[Comparable 1 Address]} & [Beds/Baths 1] & \$[Price 1] & [Date 1]\\
+{[Comparable 2 Address]} & [Beds/Baths 2] & \$[Price 2] & [Date 2]\\
+{[Comparable 3 Address]} & [Beds/Baths 3] & \$[Price 3] & [Date 3]\\
+\bottomrule
+\end{tabularx}
+
+\vspace{0.3cm}
+
+These comparables confirm the \textbf{\$[Low Range]–\$[High Range]} as-is valuation band. Subject property’s [specific issue] warrants trading at or below this floor.
+
+\vspace{0.5cm}
+
+\section*{Conclusion \& Action Plan}
+[Property Address or Name] is a \textbf{[brief summary of condition]} asset located in a [description of neighborhood or market]. Its current state makes it suitable for [assignment / fix-and-hold / rental] strategies.
+
+\vspace{0.4cm}
+
+\section*{Property Information}
+\begin{tabular}{@{}p{4cm}p{11cm}@{}}
+\textbf{Address:} & [Full Property Address]\\
+\textbf{Parcel Number:} & [Parcel ID or “TBD”]\\
+\textbf{Property Type:} & [Description — e.g., Residential – Interior Row / Detached Single-Family]\\
+\end{tabular}
+
+\vspace{0.5cm}
+
+\section*{Purchase Terms and Conditions}
+\begin{tabular}{@{}p{4cm}p{11cm}@{}}
+\textbf{Purchase Price:} & [Amount in Words] (\$[Numeric Amount] USD) Maximum\\
+\textbf{Earnest Money Deposit:} & \$[Amount] USD within [\#] hours of acceptance\\
+\textbf{Escrow:} & Held by title company for [\#] days, contingent upon inspection\\
+\textbf{Closing Date:} & On or before the [\#]th day after Effective Date, unless extended by written agreement\\
+\textbf{Funds Transfer:} & Via verified escrow account in compliance with RESPA and state escrow standards\\
+\end{tabular}
+
+\vspace{0.5cm}
+
+\newpage
+
+\section*{Contingencies and Due Diligence}
+\begin{enumerate}
+  \item \textbf{Inspection Contingency:} Buyer may obtain licensed inspection within [\#] days.
+  \item If inspection reveals material defects (e.g., [example issues]), buyer may renegotiate or terminate.
+  \item All inspections shall comply with applicable state laws (e.g., Act 114 in PA).
+\end{enumerate}
+
+\vspace{0.5cm}
+
+\section*{Representations and Compliance}
+This agreement adheres to \textbf{NAR, PAR, RELRA, and REC} ethical and fiduciary standards.
+
+\vspace{0.5cm}
+
+\section*{Execution and Signatures}
+\vspace{0.5cm}
+\noindent Seller: \rule{6cm}{0.4pt} \hfill Date: \rule{3cm}{0.4pt}\\[6pt]
+Buyer: \rule{6cm}{0.4pt} \hfill Date: \rule{3cm}{0.4pt}\\[6pt]
+Broker/Agent (Dominic Julian): \rule{6cm}{0.4pt} \hfill Date: \rule{3cm}{0.4pt}
+
+\vspace{0.6cm}
+\noindent\textit{Prepared by:} \textbf{Dominic Julian — Iron Valley Real Estate Keystone}\\
+\textit{Licensed Realtor® (PA)}\\[3pt]
+\textbf{Note:} Intended for negotiation and offer purposes only. Final contract subject to title and legal review.
+
+\vspace{0.6cm}
+\begin{center}
+\textit{\color{accentred}“Sound entry equals profitable exit.”}
+\end{center}
+
+\end{document}
+
+
