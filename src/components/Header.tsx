@@ -25,7 +25,7 @@ export function Header() {
     <header className="hud-header">
       <div className="hud-header__inner">
         <div>
-          <span className="hud-badge">DnD Backline Ops</span>
+          <span className="hud-badge">DnD Blackline Ops</span>
         </div>
         <nav className="hud-nav" aria-label="Primary navigation">
           {navItems.map((item) => {
