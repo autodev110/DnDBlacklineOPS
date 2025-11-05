@@ -7,7 +7,9 @@ export type CachedDocumentType = "acquisition" | "investor";
 export type PdfCacheEntry = {
   id: string;
   propertyAddress: string;
+  fileStem: string;
   createdAt: number;
+  variant: "initial" | "recompile";
   documents: Array<{
     type: CachedDocumentType;
     base64: string;
@@ -35,7 +37,9 @@ function readCache(): PdfCacheEntry[] {
       return (
         typeof record.id === "string" &&
         typeof record.propertyAddress === "string" &&
+        typeof record.fileStem === "string" &&
         typeof record.createdAt === "number" &&
+        (record.variant === "initial" || record.variant === "recompile") &&
         Array.isArray(record.documents)
       );
     });
@@ -104,6 +108,8 @@ export function usePdfCache() {
   const addEntry = useCallback(
     (payload: {
       propertyAddress: string;
+      fileStem: string;
+      variant?: "initial" | "recompile";
       acquisitionPdfBase64: string;
       investorPdfBase64: string;
       generatedAt: number;
@@ -111,7 +117,9 @@ export function usePdfCache() {
       const newEntry: PdfCacheEntry = {
         id: generateId(),
         propertyAddress: payload.propertyAddress,
+        fileStem: payload.fileStem,
         createdAt: payload.generatedAt,
+        variant: payload.variant ?? "initial",
         documents: [
           { type: "acquisition", base64: payload.acquisitionPdfBase64 },
           { type: "investor", base64: payload.investorPdfBase64 }

@@ -339,6 +339,8 @@ export default function ContractGeneratorPage() {
         if (nextAcquisition && nextInvestor) {
           const cacheSize = addEntry({
             propertyAddress: form.targetAddress,
+            fileStem: sanitizedFileStem,
+            variant: "recompile",
             acquisitionPdfBase64: nextAcquisition,
             investorPdfBase64: nextInvestor,
             generatedAt: Date.now()
@@ -380,7 +382,8 @@ export default function ContractGeneratorPage() {
       investorPdfUrl,
       addEntry,
       acquisitionPdfBase64,
-      investorPdfBase64
+      investorPdfBase64,
+      sanitizedFileStem
     ]
   );
 
@@ -457,6 +460,8 @@ export default function ContractGeneratorPage() {
 
         const cacheSize = addEntry({
           propertyAddress: form.targetAddress,
+          fileStem: sanitizedFileStem,
+          variant: "initial",
           acquisitionPdfBase64: acquisitionResult.base64,
           investorPdfBase64: investorResult.base64,
           generatedAt: Date.now()

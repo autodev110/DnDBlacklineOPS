@@ -56,10 +56,9 @@ function ensureDownload(
   docType: CachedDocumentType,
   downloadDocument: ReturnType<typeof usePdfCache>["downloadDocument"]
 ) {
+  const stem = entry.fileStem || entry.propertyAddress.replace(/\s+/g, "_").toLowerCase();
   const filename =
-    docType === "acquisition"
-      ? `${entry.propertyAddress.replace(/\s+/g, "_")}_acquisition.pdf`
-      : `${entry.propertyAddress.replace(/\s+/g, "_")}_investor.pdf`;
+    docType === "acquisition" ? `${stem}_acquisition.pdf` : `${stem}_investor_proposal.pdf`;
   const ok = downloadDocument(entry.id, docType, filename);
   if (ok) {
     postTelemetry({
@@ -130,6 +129,18 @@ export function OpsDashboard() {
     const [latest] = entries;
     return { latest, count: entries.length };
   }, [entries]);
+
+  const handleClearErrors = useCallback(async () => {
+    try {
+      const response = await fetch("/api/telemetry", { method: "DELETE" });
+      if (!response.ok) {
+        throw new Error(`Failed to clear errors (status ${response.status})`);
+      }
+      fetchSummary();
+    } catch (error) {
+      console.error("Failed to clear telemetry errors", error);
+    }
+  }, [fetchSummary]);
 
   const summary = state.summary;
 
@@ -246,6 +257,9 @@ export function OpsDashboard() {
                     <div className="pdf-history__meta">
                       <strong>{entry.propertyAddress}</strong>
                       <span>{formatTimestamp(entry.createdAt)}</span>
+                      <span className={`pdf-history__badge pdf-history__badge--${entry.variant}`}>
+                        {entry.variant === "recompile" ? "Recompiled" : "Initial"}
+                      </span>
                     </div>
                     <div className="pdf-history__actions">
                       <button
@@ -290,23 +304,33 @@ export function OpsDashboard() {
           subtitle="Latest anomalies flagged during automation runs."
           accent="ALERTS"
         >
-          <ul className="telemetry-errors">
-            {(summary?.recentErrors ?? []).length ? (
-              summary?.recentErrors.map((error) => (
-                <li key={`${error.source}-${error.timestamp}`}>
-                  <div>
-                    <span className={`telemetry-errors__badge telemetry-errors__badge--${error.source}`}>
-                      {error.source === "contract" ? "CONTRACT" : "PDF"}
-                    </span>
-                    <time>{formatTimestamp(error.timestamp)}</time>
-                  </div>
-                  <p>{error.message}</p>
-                </li>
-              ))
-            ) : (
-              <li className="telemetry-errors__empty">All systems nominal.</li>
-            )}
-          </ul>
+          <div className="telemetry-errors__wrapper">
+            <ul className="telemetry-errors">
+              {(summary?.recentErrors ?? []).length ? (
+                summary?.recentErrors.map((error) => (
+                  <li key={`${error.source}-${error.timestamp}`}>
+                    <div>
+                      <span className={`telemetry-errors__badge telemetry-errors__badge--${error.source}`}>
+                        {error.source === "contract" ? "CONTRACT" : "PDF"}
+                      </span>
+                      <time>{formatTimestamp(error.timestamp)}</time>
+                    </div>
+                    <p>{error.message}</p>
+                  </li>
+                ))
+              ) : (
+                <li className="telemetry-errors__empty">All systems nominal.</li>
+              )}
+            </ul>
+            <button
+              type="button"
+              className="contract-secondary contract-secondary--danger"
+              onClick={handleClearErrors}
+              disabled={!(summary?.recentErrors?.length)}
+            >
+              Clear Error Logs
+            </button>
+          </div>
         </Panel>
       </div>
     </div>

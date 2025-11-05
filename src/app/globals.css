@@ -801,6 +801,31 @@ main {
   color: rgba(200, 200, 200, 0.55);
 }
 
+.pdf-history__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 198, 255, 0.4);
+  font-size: 0.6rem;
+  letter-spacing: 0.16rem;
+  text-transform: uppercase;
+  color: rgba(0, 198, 255, 0.75);
+  margin-top: 0.4rem;
+  background: rgba(0, 198, 255, 0.08);
+}
+
+.pdf-history__badge--recompile {
+  border-color: rgba(255, 102, 0, 0.5);
+  color: rgba(255, 102, 0, 0.85);
+  background: rgba(255, 102, 0, 0.08);
+}
+
+.pdf-history__badge--initial {
+  border-color: rgba(0, 198, 255, 0.35);
+}
+
 .pdf-history__actions {
   display: flex;
   flex-wrap: wrap;
@@ -821,6 +846,15 @@ main {
   letter-spacing: 0.12rem;
   text-transform: uppercase;
   color: rgba(200, 200, 200, 0.6);
+}
+
+.telemetry-errors__wrapper {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.telemetry-errors__wrapper .contract-secondary {
+  justify-self: start;
 }
 
 .telemetry-errors {

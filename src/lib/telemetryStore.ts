@@ -175,6 +175,13 @@ function addErrorLog(error: { source: "contract" | "pdf"; message: string; times
   state.recentErrors = [error, ...state.recentErrors].slice(0, MAX_ERROR_LOG);
 }
 
+export function clearTelemetryErrors(): number {
+  const cleared = state.recentErrors.length;
+  state.recentErrors = [];
+  state.lastUpdated = Date.now();
+  return cleared;
+}
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -247,13 +254,14 @@ export function recordTelemetryEvent(event: TelemetryEvent): void {
       };
       state.lastContract = contractLog;
       addRecentContract(contractLog);
-      if (event.reason) {
-        addErrorLog({
-          source: "contract",
-          message: event.reason,
-          timestamp: event.timestamp
-        });
-      }
+      const detail = event.reason
+        ? `${event.property ?? "Contract"}: ${event.reason}`
+        : `${event.property ?? "Contract"} failed.`;
+      addErrorLog({
+        source: "contract",
+        message: detail,
+        timestamp: event.timestamp
+      });
       break;
     }
     case "pdf_compiled": {
@@ -263,13 +271,20 @@ export function recordTelemetryEvent(event: TelemetryEvent): void {
     }
     case "pdf_compile_failure": {
       state.pdfCompilationFailures += 1;
-      if (event.reason) {
-        addErrorLog({
-          source: "pdf",
-          message: event.reason,
-          timestamp: event.timestamp
-        });
+      const context: string[] = [];
+      if (event.property) {
+        context.push(event.property);
       }
+      if (event.docType) {
+        context.push(`PDF ${event.docType.toUpperCase()}`);
+      }
+      const scope = context.length ? context.join(" / ") : "PDF";
+      const detail = event.reason ? `${scope}: ${event.reason}` : `${scope}: compile failure.`;
+      addErrorLog({
+        source: "pdf",
+        message: detail,
+        timestamp: event.timestamp
+      });
       break;
     }
     case "pdf_cached": {

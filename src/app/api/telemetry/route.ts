@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  clearTelemetryErrors,
   getTelemetrySummary,
   isTelemetryEvent,
   recordTelemetryEvent,
@@ -26,4 +27,9 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : "Telemetry ingestion failed.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
+}
+
+export async function DELETE() {
+  const cleared = clearTelemetryErrors();
+  return NextResponse.json({ ok: true, cleared });
 }
