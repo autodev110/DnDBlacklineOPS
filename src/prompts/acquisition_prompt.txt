@@ -49,6 +49,7 @@ Use \textasciitilde instead of $\sim$ for “approximately.”
 All \item commands must appear only inside proper list environments (itemize, enumerate, etc.), and never inside math mode.
 Ensure all math environments ($ or \[) are properly opened and closed on the same line.
 Ensure all indentation and whitespace uses only the standard ASCII space character ($\text{U+0020}$). Do not use any Unicode non-breaking spaces or thin spaces for alignment.
+do not include the prefce that says latex''' and ends the doc with '''. Just need the compilable latex.
 }
 
 Final Output Requirement:

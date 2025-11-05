@@ -1,6 +1,8 @@
 type DocumentType = "acquisition" | "investor";
+type CompileVariant = "initial" | "recompile";
 
 type ContractStatus = "success" | "failure";
+type ActivityKind = "contract" | "compile";
 
 export type TelemetryEvent =
   | {
@@ -26,6 +28,7 @@ export type TelemetryEvent =
       docType: DocumentType;
       durationMs: number;
       timestamp: number;
+      variant?: CompileVariant;
     }
   | {
       type: "pdf_compile_failure";
@@ -33,6 +36,7 @@ export type TelemetryEvent =
       docType?: DocumentType;
       reason?: string;
       timestamp: number;
+      variant?: CompileVariant;
     }
   | {
       type: "pdf_cached";
@@ -78,11 +82,15 @@ export type TelemetrySummary = {
     timestamp: number;
     durationMs?: number;
   } | null;
-  recentContracts: Array<{
+  recentActivity: Array<{
+    kind: ActivityKind;
     property: string;
     status: ContractStatus;
     timestamp: number;
     durationMs?: number;
+    docType?: DocumentType;
+    detail?: string;
+    variant?: CompileVariant;
   }>;
   recentErrors: Array<{
     source: "contract" | "pdf";
@@ -92,7 +100,7 @@ export type TelemetrySummary = {
   lastUpdated: number;
 };
 
-const MAX_RECENT_CONTRACTS = 8;
+const MAX_RECENT_ACTIVITY = 16;
 const MAX_DURATION_SAMPLES = 50;
 const MAX_ERROR_LOG = 10;
 
@@ -108,7 +116,7 @@ type TelemetryState = {
   pdfCacheEntries: number;
   lastCacheClearAt: number | null;
   lastContract: TelemetrySummary["lastContract"];
-  recentContracts: TelemetrySummary["recentContracts"];
+  recentActivity: TelemetrySummary["recentActivity"];
   recentErrors: TelemetrySummary["recentErrors"];
   lastUpdated: number;
 };
@@ -125,7 +133,7 @@ const state: TelemetryState = {
   pdfCacheEntries: 0,
   lastCacheClearAt: null,
   lastContract: null,
-  recentContracts: [],
+  recentActivity: [],
   recentErrors: [],
   lastUpdated: Date.now()
 };
@@ -159,16 +167,17 @@ function calculateStdDev(values: number[]): number | null {
   return Math.sqrt(variance);
 }
 
-function addRecentContract(contract: {
+function addRecentActivity(entry: {
+  kind: ActivityKind;
   property: string;
   status: ContractStatus;
   timestamp: number;
   durationMs?: number;
+  docType?: DocumentType;
+  detail?: string;
+  variant?: CompileVariant;
 }) {
-  state.recentContracts = [contract, ...state.recentContracts].slice(
-    0,
-    MAX_RECENT_CONTRACTS
-  );
+  state.recentActivity = [entry, ...state.recentActivity].slice(0, MAX_RECENT_ACTIVITY);
 }
 
 function addErrorLog(error: { source: "contract" | "pdf"; message: string; timestamp: number }) {
@@ -242,18 +251,30 @@ export function recordTelemetryEvent(event: TelemetryEvent): void {
         durationMs: event.durationMs
       };
       state.lastContract = contractLog;
-      addRecentContract(contractLog);
+      addRecentActivity({
+        kind: "contract",
+        property: contractLog.property,
+        status: "success",
+        timestamp: event.timestamp,
+        durationMs: event.durationMs
+      });
       break;
     }
     case "contract_failure": {
       state.contractFailures += 1;
-      const contractLog = {
-        property: event.property ?? "Unspecified",
-        status: "failure" as const,
+      const property = event.property ?? "Unspecified";
+      state.lastContract = {
+        property,
+        status: "failure",
         timestamp: event.timestamp
       };
-      state.lastContract = contractLog;
-      addRecentContract(contractLog);
+      addRecentActivity({
+        kind: "contract",
+        property,
+        status: "failure",
+        timestamp: event.timestamp,
+        detail: event.reason
+      });
       const detail = event.reason
         ? `${event.property ?? "Contract"}: ${event.reason}`
         : `${event.property ?? "Contract"} failed.`;
@@ -267,6 +288,16 @@ export function recordTelemetryEvent(event: TelemetryEvent): void {
     case "pdf_compiled": {
       state.pdfCompilations += 1;
       pushSample(state.pdfDurations, event.durationMs);
+      addRecentActivity({
+        kind: "compile",
+        property: event.property,
+        status: "success",
+        timestamp: event.timestamp,
+        durationMs: event.durationMs,
+        docType: event.docType,
+        variant: event.variant,
+        detail: event.variant === "recompile" ? "Recompiled" : undefined
+      });
       break;
     }
     case "pdf_compile_failure": {
@@ -278,12 +309,31 @@ export function recordTelemetryEvent(event: TelemetryEvent): void {
       if (event.docType) {
         context.push(`PDF ${event.docType.toUpperCase()}`);
       }
+      if (event.variant === "recompile") {
+        context.push("Recompile");
+      }
       const scope = context.length ? context.join(" / ") : "PDF";
-      const detail = event.reason ? `${scope}: ${event.reason}` : `${scope}: compile failure.`;
+      const reasonDetail = event.reason ? `${scope}: ${event.reason}` : `${scope}: compile failure.`;
+      const detail =
+        event.variant === "recompile" ? `${reasonDetail} (Recompile)` : reasonDetail;
       addErrorLog({
         source: "pdf",
         message: detail,
         timestamp: event.timestamp
+      });
+      addRecentActivity({
+        kind: "compile",
+        property: event.property ?? "Unspecified",
+        status: "failure",
+        timestamp: event.timestamp,
+        docType: event.docType,
+        detail:
+          event.variant === "recompile"
+            ? event.reason
+              ? `Recompile · ${event.reason}`
+              : "Recompile attempt failed."
+            : event.reason,
+        variant: event.variant
       });
       break;
     }
@@ -343,7 +393,7 @@ export function getTelemetrySummary(): TelemetrySummary {
       lastClearAt: state.lastCacheClearAt
     },
     lastContract: state.lastContract,
-    recentContracts: state.recentContracts,
+    recentActivity: state.recentActivity,
     recentErrors: state.recentErrors,
     lastUpdated: state.lastUpdated
   };

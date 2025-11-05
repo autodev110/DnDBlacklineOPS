@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
-const STORAGE_KEY = "dnd-backline-ops-pdf-cache";
+const STORAGE_KEY = "dnd-blackline-ops-pdf-cache";
+const LEGACY_STORAGE_KEYS = ["dnd-backline-ops-pdf-cache"];
 
 export type CachedDocumentType = "acquisition" | "investor";
 
@@ -21,7 +22,24 @@ function readCache(): PdfCacheEntry[] {
     return [];
   }
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    let raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      for (const legacyKey of LEGACY_STORAGE_KEYS) {
+        const legacyValue = window.localStorage.getItem(legacyKey);
+        if (legacyValue) {
+          raw = legacyValue;
+          try {
+            window.localStorage.setItem(STORAGE_KEY, legacyValue);
+            if (legacyKey !== STORAGE_KEY) {
+              window.localStorage.removeItem(legacyKey);
+            }
+          } catch {
+            // Ignore persistence failures during migration.
+          }
+          break;
+        }
+      }
+    }
     if (!raw) {
       return [];
     }
@@ -29,20 +47,45 @@ function readCache(): PdfCacheEntry[] {
     if (!Array.isArray(parsed)) {
       return [];
     }
-    return parsed.filter((item): item is PdfCacheEntry => {
+    const normalized: PdfCacheEntry[] = [];
+    for (const item of parsed) {
       if (!item || typeof item !== "object") {
-        return false;
+        continue;
       }
-      const record = item as PdfCacheEntry;
-      return (
-        typeof record.id === "string" &&
-        typeof record.propertyAddress === "string" &&
-        typeof record.fileStem === "string" &&
-        typeof record.createdAt === "number" &&
-        (record.variant === "initial" || record.variant === "recompile") &&
-        Array.isArray(record.documents)
-      );
-    });
+      const record = item as Partial<PdfCacheEntry> & {
+        id?: unknown;
+        propertyAddress?: unknown;
+        fileStem?: unknown;
+        createdAt?: unknown;
+        variant?: unknown;
+        documents?: unknown;
+      };
+      if (
+        typeof record.id !== "string" ||
+        typeof record.propertyAddress !== "string" ||
+        typeof record.createdAt !== "number" ||
+        !Array.isArray(record.documents)
+      ) {
+        continue;
+      }
+
+      const fileStem =
+        typeof record.fileStem === "string" && record.fileStem.trim().length
+          ? record.fileStem
+          : record.propertyAddress.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").toLowerCase() ||
+            "dnd_blackline";
+      const variant: "initial" | "recompile" = record.variant === "recompile" ? "recompile" : "initial";
+
+      normalized.push({
+        id: record.id,
+        propertyAddress: record.propertyAddress,
+        fileStem,
+        createdAt: record.createdAt,
+        variant,
+        documents: record.documents as PdfCacheEntry["documents"]
+      });
+    }
+    return normalized;
   } catch {
     return [];
   }
@@ -54,6 +97,11 @@ function persistCache(entries: PdfCacheEntry[]) {
   }
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    for (const legacyKey of LEGACY_STORAGE_KEYS) {
+      if (legacyKey !== STORAGE_KEY) {
+        window.localStorage.removeItem(legacyKey);
+      }
+    }
     window.dispatchEvent(new CustomEvent("dnd-pdf-cache-updated"));
   } catch {
     // Ignore storage quota errors
@@ -145,6 +193,13 @@ export function usePdfCache() {
       persistCache([]);
       return [];
     });
+    if (typeof window !== "undefined") {
+      for (const legacyKey of LEGACY_STORAGE_KEYS) {
+        if (legacyKey !== STORAGE_KEY) {
+          window.localStorage.removeItem(legacyKey);
+        }
+      }
+    }
     return cleared;
   }, []);
 

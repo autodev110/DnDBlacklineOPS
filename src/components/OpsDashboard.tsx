@@ -159,7 +159,9 @@ export function OpsDashboard() {
                 {formatNumber(summary?.totals.contractAttempts)}
               </strong>
               <span className="telemetry-card__meta">
-                Success Rate: {formatPercentage(summary?.metrics.contractSuccessRate)}
+                {`Successes: ${formatNumber(summary?.totals.contractSuccesses)} | Failures: ${formatNumber(
+                  summary?.totals.contractFailures
+                )}`}
               </span>
             </div>
             <div className="telemetry-card">
@@ -186,16 +188,18 @@ export function OpsDashboard() {
                 {formatPercentage(summary?.metrics.pdfSuccessRate)}
               </strong>
               <span className="telemetry-card__meta">
-                Downloads: {formatNumber(summary?.totals.pdfDownloads)}
+                {`Attempts: ${formatNumber(
+                  (summary?.totals.pdfCompilations ?? 0) + (summary?.totals.pdfCompilationFailures ?? 0)
+                )} | Failures: ${formatNumber(summary?.totals.pdfCompilationFailures)}`}
               </span>
             </div>
             <div className="telemetry-card">
-              <span className="telemetry-card__label">Cache Entries</span>
+              <span className="telemetry-card__label">PDF Downloads</span>
               <strong className="telemetry-card__value">
-                {formatNumber(summary?.cache.entries ?? cacheMeta.count)}
+                {formatNumber(summary?.totals.pdfDownloads)}
               </strong>
               <span className="telemetry-card__meta">
-                Last Clear: {formatTimestamp(summary?.cache.lastClearAt)}
+                Cache Entries: {formatNumber(summary?.cache.entries ?? cacheMeta.count)}
               </span>
             </div>
             <div className="telemetry-card telemetry-card--status">
@@ -211,25 +215,35 @@ export function OpsDashboard() {
           {state.error ? <p className="telemetry-error">{state.error}</p> : null}
         </Panel>
         <Panel
-          title="Recent Contract Activity"
-          subtitle="Latest contract generations with timing insight."
+          title="Recent Activity"
+          subtitle="Latest LLM generations and PDF compilations."
           accent="TIMELINE"
         >
           <ul className="telemetry-activity">
-            {(summary?.recentContracts ?? []).length ? (
-              summary?.recentContracts.map((contract) => (
-                <li key={`${contract.property}-${contract.timestamp}`}>
+            {(summary?.recentActivity ?? []).length ? (
+              summary?.recentActivity.map((activity) => (
+                <li key={`${activity.kind}-${activity.property}-${activity.timestamp}`}>
                   <div>
-                    <strong>{contract.property}</strong>
-                    <span>{formatTimestamp(contract.timestamp)}</span>
+                    <strong>{activity.property}</strong>
+                    <span>{formatTimestamp(activity.timestamp)}</span>
                   </div>
-                  <div>
-                    <span className={`telemetry-activity__status telemetry-activity__status--${contract.status}`}>
-                      {contract.status === "success" ? "Success" : "Failure"}
+                  <div className="telemetry-activity__meta">
+                    <span
+                      className={`telemetry-activity__badge telemetry-activity__badge--${activity.kind}`}
+                    >
+                      {activity.kind === "contract"
+                        ? "LLM"
+                        : `PDF ${activity.docType?.toUpperCase() ?? ""}`.trim() || "PDF"}
                     </span>
-                    {contract.durationMs !== undefined ? (
-                      <span>{formatDurationMs(contract.durationMs)}</span>
+                    <span
+                      className={`telemetry-activity__status telemetry-activity__status--${activity.status}`}
+                    >
+                      {activity.status === "success" ? "Success" : "Failure"}
+                    </span>
+                    {activity.durationMs !== undefined ? (
+                      <span>{formatDurationMs(activity.durationMs)}</span>
                     ) : null}
+                    {activity.detail ? <span>{activity.detail}</span> : null}
                   </div>
                 </li>
               ))

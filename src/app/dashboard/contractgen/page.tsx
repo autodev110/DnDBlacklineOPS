@@ -194,9 +194,15 @@ export default function ContractGeneratorPage() {
   );
 
   const compileLatexToPdf = useCallback(
-    async (latex: string, docType: DocumentType, propertyAddress: string) => {
+    async (
+      latex: string,
+      docType: DocumentType,
+      propertyAddress: string,
+      variant: "initial" | "recompile" = "initial"
+    ) => {
       const startedAt = performance.now();
       const telemetryTimestamp = Date.now();
+      const propertyLabel = propertyAddress.trim() || "Unspecified Property";
 
       try {
         const response = await fetch("/api/compile", {
@@ -227,20 +233,22 @@ export default function ContractGeneratorPage() {
 
         postTelemetry({
           type: "pdf_compiled",
-          property: propertyAddress,
+          property: propertyLabel,
           docType,
           durationMs,
-          timestamp: telemetryTimestamp
+          timestamp: telemetryTimestamp,
+          variant
         });
 
         return { base64, url, durationMs };
       } catch (error) {
         postTelemetry({
           type: "pdf_compile_failure",
-          property: propertyAddress,
+          property: propertyLabel,
           docType,
           reason: error instanceof Error ? error.message : "Unknown PDF compile error",
-          timestamp: telemetryTimestamp
+          timestamp: telemetryTimestamp,
+          variant
         });
         throw error;
       }
@@ -280,10 +288,15 @@ export default function ContractGeneratorPage() {
         return;
       }
 
-      const anchor = document.createElement("a");
+      if (typeof window === "undefined" || !window.document) {
+        return;
+      }
+
+      const doc = window.document;
+      const anchor = doc.createElement("a");
       anchor.href = url;
       anchor.download = getPdfFileName(docType);
-      document.body.appendChild(anchor);
+      doc.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
 
@@ -317,7 +330,7 @@ export default function ContractGeneratorPage() {
       );
 
       try {
-        const result = await compileLatexToPdf(source, docType, form.targetAddress);
+        const result = await compileLatexToPdf(source, docType, form.targetAddress, "recompile");
 
         if (docType === "acquisition") {
           if (acquisitionPdfUrl) {
@@ -450,8 +463,13 @@ export default function ContractGeneratorPage() {
         setCompileVariant("loading");
         setCompileMessage("Compiling PDFs via CloudConvert…");
         const [acquisitionResult, investorResult] = await Promise.all([
-          compileLatexToPdf(payload.acquisition ?? "", "acquisition", form.targetAddress),
-          compileLatexToPdf(payload.investor ?? "", "investor", form.targetAddress)
+          compileLatexToPdf(
+            payload.acquisition ?? "",
+            "acquisition",
+            form.targetAddress,
+            "initial"
+          ),
+          compileLatexToPdf(payload.investor ?? "", "investor", form.targetAddress, "initial")
         ]);
         setAcquisitionPdfUrl(acquisitionResult.url);
         setInvestorPdfUrl(investorResult.url);
