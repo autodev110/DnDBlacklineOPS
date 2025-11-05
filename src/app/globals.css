@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Black+Ops+One:wght@400&family=Special+Elite&display=swap');
+
 :root {
   --color-bg: #050607;
   --color-panel: #e6e6e6;
@@ -27,7 +29,7 @@ body {
     radial-gradient(circle at bottom left, rgba(0, 198, 255, 0.08), transparent 55%),
     linear-gradient(135deg, #0b0b0f 0%, #050607 55%, #08090d 100%);
   color: var(--color-text-primary);
-  font-family: var(--font-special-elite), 'Courier New', Courier, monospace;
+  font-family: 'Special Elite', 'Courier New', Courier, monospace;
   position: relative;
   overflow-x: hidden;
 }
@@ -84,7 +86,7 @@ main {
 }
 
 .hud-title {
-  font-family: var(--font-black-ops), 'Arial Black', Impact, sans-serif;
+  font-family: 'Black Ops One', 'Arial Black', Impact, sans-serif;
   letter-spacing: 0.25rem;
   text-transform: uppercase;
   color: var(--color-bg);
@@ -276,7 +278,7 @@ main {
 
 .landing-title {
   margin: 0;
-  font-family: var(--font-black-ops), 'Arial Black', Impact, sans-serif;
+              font-family: 'Black Ops One', 'Arial Black', Impact, sans-serif;
   font-size: clamp(2.5rem, 7vw, 6rem);
   letter-spacing: 0.5rem;
   color: var(--color-text-primary);
@@ -592,7 +594,7 @@ main {
 
 .contract-pdf-card__header h3 {
   margin: 0;
-  font-family: var(--font-black-ops), "Arial Black", Impact, sans-serif;
+  font-family: 'Black Ops One', "Arial Black", Impact, sans-serif;
   letter-spacing: 0.18rem;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.82);
@@ -667,7 +669,7 @@ main {
 }
 
 .telemetry-card__value {
-  font-family: var(--font-black-ops), "Arial Black", Impact, sans-serif;
+  font-family: 'Black Ops One', "Arial Black", Impact, sans-serif;
   font-size: 1.4rem;
   letter-spacing: 0.18rem;
   color: rgba(255, 255, 255, 0.9);

@@ -142,7 +142,7 @@ export function usePdfCache() {
 
   const downloadDocument = useCallback(
     (entryId: string, docType: CachedDocumentType, suggestedFileName: string) => {
-      if (!isReady || typeof document === "undefined") {
+      if (!isReady || typeof window === "undefined" || !window.document) {
         return false;
       }
 
@@ -150,18 +150,19 @@ export function usePdfCache() {
       if (!entry) {
         return false;
       }
-      const document = entry.documents.find((doc) => doc.type === docType);
-      if (!document) {
+      const cachedDoc = entry.documents.find((doc) => doc.type === docType);
+      if (!cachedDoc) {
         return false;
       }
 
-      const blob = base64ToBlob(document.base64);
+      const blob = base64ToBlob(cachedDoc.base64);
       const url = URL.createObjectURL(blob);
+      const doc = window.document;
 
-      const anchor = document.createElement("a");
+      const anchor = doc.createElement("a");
       anchor.href = url;
       anchor.download = suggestedFileName;
-      document.body.appendChild(anchor);
+      doc.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);

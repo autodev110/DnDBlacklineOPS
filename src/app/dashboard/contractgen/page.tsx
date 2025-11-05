@@ -75,7 +75,7 @@ const fieldConfig: Array<{
   },
   {
     name: "inspectionPeriod",
-    label: "Inspection/Closing Period (days)",
+    label: "Closing Time (days)",
     placeholder: "30",
     type: "number"
   },
