@@ -118,6 +118,8 @@ export default function ContractGeneratorPage() {
   const [isCompilingPdf, setIsCompilingPdf] = useState(false);
   const [acquisitionPdfUrl, setAcquisitionPdfUrl] = useState<string | null>(null);
   const [investorPdfUrl, setInvestorPdfUrl] = useState<string | null>(null);
+  const [acquisitionPdfBase64, setAcquisitionPdfBase64] = useState<string | null>(null);
+  const [investorPdfBase64, setInvestorPdfBase64] = useState<string | null>(null);
   const pdfUrlRegistry = useRef<string[]>([]);
   const { entries: cacheEntries, addEntry, clearCache } = usePdfCache();
 
@@ -143,6 +145,8 @@ export default function ContractGeneratorPage() {
     revokePdfUrls();
     setAcquisitionPdfUrl(null);
     setInvestorPdfUrl(null);
+    setAcquisitionPdfBase64(null);
+    setInvestorPdfBase64(null);
     setCompileMessage("");
     setIsCompilingPdf(false);
     setCompileVariant("idle");
@@ -244,15 +248,41 @@ export default function ContractGeneratorPage() {
     [base64ToPdfUrl]
   );
 
+  const handleCopyToClipboard = useCallback((value: string) => {
+    if (!value.trim()) {
+      return;
+    }
+    if (typeof navigator === "undefined" || !navigator.clipboard) {
+      return;
+    }
+    navigator.clipboard.writeText(value).catch(() => undefined);
+  }, []);
+
+  const sanitizedFileStem = useMemo(() => {
+    const trimmed = form.targetAddress.trim();
+    if (!trimmed) {
+      return "dnd_blackline";
+    }
+    return trimmed.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "").toLowerCase() || "dnd_blackline";
+  }, [form.targetAddress]);
+
+  const getPdfFileName = useCallback(
+    (docType: DocumentType) => {
+      const suffix = docType === "acquisition" ? "acquisition" : "investor_proposal";
+      return `${sanitizedFileStem}_${suffix}.pdf`;
+    },
+    [sanitizedFileStem]
+  );
+
   const handleDownloadPdf = useCallback(
-    (url: string | null, filename: string, docType: DocumentType) => {
+    (url: string | null, docType: DocumentType) => {
       if (!url) {
         return;
       }
 
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = filename;
+      anchor.download = getPdfFileName(docType);
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
@@ -266,18 +296,93 @@ export default function ContractGeneratorPage() {
         });
       }
     },
-    [form.targetAddress]
+    [form.targetAddress, getPdfFileName]
   );
 
-  const handleCopyToClipboard = useCallback((value: string) => {
-    if (!value.trim()) {
-      return;
-    }
-    if (typeof navigator === "undefined" || !navigator.clipboard) {
-      return;
-    }
-    navigator.clipboard.writeText(value).catch(() => undefined);
-  }, []);
+  const handleRecompile = useCallback(
+    async (docType: DocumentType) => {
+      const source = docType === "acquisition" ? acquisitionOutput : investorOutput;
+      if (!source.trim()) {
+        setCompileVariant("error");
+        setCompileMessage("No LaTeX content to compile.");
+        return;
+      }
+
+      setIsCompilingPdf(true);
+      setCompileVariant("loading");
+      setCompileMessage(
+        docType === "acquisition"
+          ? "Recompiling acquisition PDF…"
+          : "Recompiling investor PDF…"
+      );
+
+      try {
+        const result = await compileLatexToPdf(source, docType, form.targetAddress);
+
+        if (docType === "acquisition") {
+          if (acquisitionPdfUrl) {
+            URL.revokeObjectURL(acquisitionPdfUrl);
+          }
+          setAcquisitionPdfUrl(result.url);
+          setAcquisitionPdfBase64(result.base64);
+        } else {
+          if (investorPdfUrl) {
+            URL.revokeObjectURL(investorPdfUrl);
+          }
+          setInvestorPdfUrl(result.url);
+          setInvestorPdfBase64(result.base64);
+        }
+
+        const nextAcquisition = docType === "acquisition" ? result.base64 : acquisitionPdfBase64;
+        const nextInvestor = docType === "investor" ? result.base64 : investorPdfBase64;
+
+        if (nextAcquisition && nextInvestor) {
+          const cacheSize = addEntry({
+            propertyAddress: form.targetAddress,
+            acquisitionPdfBase64: nextAcquisition,
+            investorPdfBase64: nextInvestor,
+            generatedAt: Date.now()
+          });
+
+          if (form.targetAddress.trim()) {
+            postTelemetry({
+              type: "pdf_cached",
+              property: form.targetAddress,
+              cacheSize,
+              timestamp: Date.now()
+            });
+          }
+        }
+
+        setCompileVariant("success");
+        setCompileMessage(
+          docType === "acquisition"
+            ? "Acquisition PDF refreshed."
+            : "Investor proposal PDF refreshed."
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred while recompiling.";
+        setCompileVariant("error");
+        setCompileMessage(message);
+      } finally {
+        setIsCompilingPdf(false);
+      }
+    },
+    [
+      acquisitionOutput,
+      investorOutput,
+      form.targetAddress,
+      compileLatexToPdf,
+      acquisitionPdfUrl,
+      investorPdfUrl,
+      addEntry,
+      acquisitionPdfBase64,
+      investorPdfBase64
+    ]
+  );
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -347,6 +452,8 @@ export default function ContractGeneratorPage() {
         ]);
         setAcquisitionPdfUrl(acquisitionResult.url);
         setInvestorPdfUrl(investorResult.url);
+        setAcquisitionPdfBase64(acquisitionResult.base64);
+        setInvestorPdfBase64(investorResult.base64);
 
         const cacheSize = addEntry({
           propertyAddress: form.targetAddress,
@@ -458,8 +565,8 @@ export default function ContractGeneratorPage() {
         <div className="contract-output-grid">
           <div className="contract-output-pane">
             <div className="contract-output-header">
-              <div className="contract-output-header__title">
-                <span>Residential Acquisition</span>
+              <span>Residential Acquisition</span>
+              <div className="contract-output-actions">
                 <button
                   type="button"
                   className="contract-copy"
@@ -468,21 +575,31 @@ export default function ContractGeneratorPage() {
                 >
                   Copy
                 </button>
+                <button
+                  type="button"
+                  className="contract-secondary"
+                  onClick={() => handleRecompile("acquisition")}
+                  disabled={isCompilingPdf || !acquisitionOutput.trim()}
+                >
+                  Recompile
+                </button>
               </div>
-              {isSubmitting ? <span>Processing…</span> : null}
             </div>
-            <div className="contract-output-body">
-              {acquisitionOutput
-                ? acquisitionOutput
-                : isSubmitting
-                ? "Awaiting acquisition brief from Gemini…"
-                : "Generated LaTeX will appear here once available."}
-            </div>
+            <textarea
+              className="contract-output-body"
+              value={acquisitionOutput}
+              onChange={(event) => setAcquisitionOutput(event.target.value)}
+              placeholder={
+                isSubmitting
+                  ? "Awaiting acquisition brief from Gemini…"
+                  : "Generated LaTeX will appear here once available."
+              }
+            />
           </div>
           <div className="contract-output-pane">
             <div className="contract-output-header">
-              <div className="contract-output-header__title">
-                <span>Investor Proposal</span>
+              <span>Investor Proposal</span>
+              <div className="contract-output-actions">
                 <button
                   type="button"
                   className="contract-copy"
@@ -491,16 +608,26 @@ export default function ContractGeneratorPage() {
                 >
                   Copy
                 </button>
+                <button
+                  type="button"
+                  className="contract-secondary"
+                  onClick={() => handleRecompile("investor")}
+                  disabled={isCompilingPdf || !investorOutput.trim()}
+                >
+                  Recompile
+                </button>
               </div>
-              {isSubmitting ? <span>Processing…</span> : null}
             </div>
-            <div className="contract-output-body">
-              {investorOutput
-                ? investorOutput
-                : isSubmitting
-                ? "Awaiting investor proposal from Gemini…"
-                : "Generated LaTeX will appear here once available."}
-            </div>
+            <textarea
+              className="contract-output-body"
+              value={investorOutput}
+              onChange={(event) => setInvestorOutput(event.target.value)}
+              placeholder={
+                isSubmitting
+                  ? "Awaiting investor proposal from Gemini…"
+                  : "Generated LaTeX will appear here once available."
+              }
+            />
           </div>
         </div>
       </Panel>
@@ -516,9 +643,7 @@ export default function ContractGeneratorPage() {
               <button
                 type="button"
                 className="contract-secondary"
-                onClick={() =>
-                  handleDownloadPdf(acquisitionPdfUrl, "residential-acquisition.pdf", "acquisition")
-                }
+                onClick={() => handleDownloadPdf(acquisitionPdfUrl, "acquisition")}
                 disabled={!acquisitionPdfUrl}
               >
                 Download PDF
@@ -546,9 +671,7 @@ export default function ContractGeneratorPage() {
               <button
                 type="button"
                 className="contract-secondary"
-                onClick={() =>
-                  handleDownloadPdf(investorPdfUrl, "investor-proposal.pdf", "investor")
-                }
+                onClick={() => handleDownloadPdf(investorPdfUrl, "investor")}
                 disabled={!investorPdfUrl}
               >
                 Download PDF
