@@ -1,0 +1,76 @@
+DnD Blackline Ops – Expansion Analysis
+======================================
+
+Context
+-------
+You have two prompt files (acquisition/investor) that are highly tuned and proven to emit LaTeX your compiler accepts. Contract generation currently:
+1. Collects a fixed set of variables on the form.
+2. Submits them to the `/api/contracts` route.
+3. The agent module overlays those values into both prompts and calls Gemini 2.5 Flash.
+4. Outputs go straight to compilation, caching, and telemetry.
+
+Requirements From Latest Brief
+------------------------------
+1. Occasionally attach an **investor proposal / rehab plan** section to the output without breaking existing runs.
+2. Capture **additional notes / key points** on the form, but only when needed.
+3. Avoid altering the proven prompts unless explicitly opting into an experiment.
+4. Provide an operator-facing toggle (checkbox/switch) that:
+   - Leaves the system unchanged when off.
+   - Switches to an alternate prompt flow when on, so you can iterate safely.
+5. Maintain backward compatibility for telemetry, caching, and PDF assets.
+
+Key Constraints
+---------------
+- Prompt tweaks risk destabilizing LaTeX formatting; avoid editing existing `.txt` files.
+- Need a low-friction way to ship experimental prompts alongside production ones.
+- Optional sections should not force additional inputs unless the toggle is active.
+- Keep UI minimal; operator must understand when “experimental mode” is engaged.
+
+Recommended Approach
+--------------------
+1. **Introduce a “Enhanced Investor Plan” toggle on the contract form** (checkbox or pill switch).
+   - Persist its state via `usePersistentState` keyed separately (e.g., `contractgen-plan-enabled`).
+   - Default to “off” so legacy flows remain untouched.
+
+2. **Add an optional “Additional Key Points” textarea** that is disabled/hidden unless the toggle is active.
+   - When active, capture notes (maybe multiline) and pass them through in the payload.
+   - Enforce length limits and sanitize input to keep prompts manageable.
+
+3. **Extend the payload/agent schema with optional fields** (e.g., `additionalNotes`, `planVariant`).
+   - On the server, branch inside `generateContractDocuments`:
+     - If `planVariant === "enhanced"`, load *new prompt files* (e.g., `acquisition_plan_prompt.txt`, `investor_plan_prompt.txt`) stored alongside the originals.
+     - Otherwise reuse the legacy prompts untouched.
+   - Keep prompt filenames explicit so you can iterate safely on the alternates without touching the originals.
+
+4. **Author new, opt-in prompt files** dedicated to the plan workflow.
+   - Start from the working prompts, copy them to new files, and insert the extra sections/logic you need.
+   - Reference the new notes variable in those prompts (e.g., `Additional Notes: { ... }`) plus any new LaTeX blocks for the investor plan.
+   - Because the overlay logic is label-based, just add a new entry in `VARIABLE_LABELS` for the notes so substitutions keep working.
+
+5. **Output handling**
+   - Since the PDF structure may change, consider tagging cache entries/telemetry with the variant (`initial-plan` vs `initial`) to keep metrics comparable.
+   - The toggle state should flow into telemetry events so you can evaluate success/failure rates for the experimental path separately.
+
+6. **UX / Safety Cues**
+   - Highlight the toggle with descriptive copy (“Include rehab plan section (experimental)”).
+   - Maybe add inline help text explaining that notes feed directly into an investor-plan prompt.
+   - Consider gating the toggle behind a confirmation modal until the new prompts are proven.
+
+7. **Testing Strategy**
+   - Before shipping, run the new prompts through Gemini manually to ensure LaTeX compiles.
+   - Use the existing PDF compilation route to validate the CloudConvert output matches expectations (especially the new section).
+
+Benefits
+--------
+- Maintains stability for standard runs—no behavior change when the toggle is off.
+- Gives you a controlled path to iterate on richer investor proposals and property-specific guidance.
+- Provides a clear UX affordance plus structured data capture for extra notes.
+- Keeps prompt experimentation isolated in new files so regression risk is minimized.
+
+Next Steps
+----------
+1. Design the toggle + notes UI (layout, copy, validation rules).
+2. Update payload/agent types to carry `planVariant` and `additionalNotes`.
+3. Clone existing prompts into new files and embed the investor plan logic plus optional notes section.
+4. Instrument telemetry/cache tagging to distinguish the enhanced mode.
+5. Perform end-to-end tests (LLM → PDF) before enabling the toggle in production.
