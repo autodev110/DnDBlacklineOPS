@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   {
+    label: "LaTeX-ify",
+    href: "/dashboard/latexify"
+  },
+  {
     label: "Generate Contracts",
     href: "/dashboard/contractgen"
   },

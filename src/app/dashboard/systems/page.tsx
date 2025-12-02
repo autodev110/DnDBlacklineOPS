@@ -21,7 +21,7 @@ type TelemetrySummary = {
     property: string;
     status: "success" | "failure";
     timestamp: number;
-    docType?: "acquisition" | "investor";
+    docType?: "acquisition" | "investor" | "latexify";
     detail?: string;
     variant?: "initial" | "recompile";
   }>;

@@ -49,13 +49,19 @@ Include:
 Formatting logic:
 
 - Use `\onehalfspacing`
-- Use `\titleformat{\section}` and `\titleformat{\subsection}` as shown in the template
+- Use `\titleformat{\section}` and `\titleformat{\subsection}` as shown in the template below:
+
+    % Section formatting
+    \titleformat{\section}{\normalfont\Large\bfseries}{\thesection.}{1em}{}
+    \titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection.}{1em}{}
+
 - Use `\rowcolors{2}{white}{rowgray}` for tables
 - Tables must use `booktabs` style, wrap content to avoid overflow, and stay within page margins using `p{Xcm}` columns
 - Every section must follow DnD Solutions' professional tone and layout
 - Use `\textbf{}` for inline emphasis — never use ALL CAPS
 - Break large content into `\section*{}`, `\subsection*{}`, and `\begin{itemize}` blocks for clarity
 - Sanitize all special characters that could break LaTeX (%, &, $, _, {, }, etc.)
+- all section titles must be left aligned and not use "full justified" alignment
 
 ---
 
@@ -67,8 +73,31 @@ The title page must be on its own page and must include:
 - A title using the company name from user input
 - A subtitle such as “Growth Strategy & Quote” or similar if present
 - Client and contact info if mentioned
-- Fee if specified
 - Current date using `\today`
+
+Always follow the template below for the title page exactly:
+
+    % Title Page
+    \thispagestyle{empty}
+    \begin{center}
+        \vspace*{\fill} % Push content to vertical center
+        \makebox[\textwidth]{\includegraphics[width=0.7\textwidth]{dndlogo2.png}}
+        \vspace{.25cm} % Space between logo and title
+        \newline
+        {\Huge\textbf{title using the company name from user input}\par}
+        \vspace{1cm} % Space between title and subtitle
+        {\Large\textbf{A subtitle such as “Growth Strategy & Quote” or similar}\par}
+        \vspace{1.5cm} % Space before client details
+
+        \begin{tabular}{l l}
+            \textbf{Client:} & client company (city, state) \\
+            \textbf{Contact:} & client contact provided from user \\
+            \textbf{Date:} & current month day, year \\
+        \end{tabular}
+        \vspace*{\fill} % Push content to vertical center
+        \vspace{1cm}
+    \end{center}
+    \clearpage
 
 ---
 
@@ -77,6 +106,8 @@ The title page must be on its own page and must include:
 Your final output must be a **single valid LaTeX document block** — no commentary, no explanation, no markdown.
 
 Never include placeholder text. Every placeholder must be filled with user input, or omitted cleanly if not applicable.
+
+Never begin output with "Latex" and have the body wrapped in triple quotes, just the code itself and nothing else, no preamble or code language mentioned
 
 ---
 
@@ -105,6 +136,7 @@ Your output must:
 - Match the exact DnD Solutions template
 - Convert all user input into a polished business proposal
 - Be immediately ready to preview, compile, and export
+- Must not begin with "Latex '''", just the code itself and nothing else
 
 Now take the user input below this line and convert it accordingly.
 

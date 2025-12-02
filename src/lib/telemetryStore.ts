@@ -1,4 +1,4 @@
-type DocumentType = "acquisition" | "investor";
+type DocumentType = "acquisition" | "investor" | "latexify";
 type CompileVariant = "initial" | "recompile";
 
 type ContractStatus = "success" | "failure";
@@ -196,7 +196,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 }
 
 function isDocumentType(value: unknown): value is DocumentType {
-  return value === "acquisition" || value === "investor";
+  return value === "acquisition" || value === "investor" || value === "latexify";
 }
 
 export function isTelemetryEvent(value: unknown): value is TelemetryEvent {

@@ -1,0 +1,87 @@
+Logo inclusion options for LaTeX PDFs (CloudConvert + alternatives)
+==================================================================
+
+Context
+-------
+- ContractGen pipeline compiles fine via CloudConvert with plain LaTeX.
+- LaTeX-ify fails when we try to bundle the logo; CloudConvert reports “conversion type is not supported” or “input task has failed.”
+- Goal: keep using CloudConvert for LaTeX-ify, but reliably embed `dndlogo2.png` on the title page. If that fails, add the logo after PDF generation.
+
+Options to try with CloudConvert
+--------------------------------
+1) Multi-input with explicit “main_file”
+   - Tasks:
+     - upload_tex: import/base64 of document.tex
+     - upload_logo: import/base64 of dndlogo2.png
+     - convert_pdf: operation convert, input_format: tex, output_format: pdf, input: ["upload_tex", "upload_logo"], engine: pdflatex (only if supported), filename or main_file: document.tex
+   - Rationale: Some docs show `main_file` instead of `filename` when multiple inputs exist. Worth trying `main_file: "document.tex"`; if engine is unsupported, omit it.
+
+2) Zip with main_file and latex input_format
+   - Tasks:
+     - upload_source: import/base64 of bundle.zip containing document.tex + dndlogo2.png
+     - convert_pdf: operation convert, input_format: latex (or tex if latex is rejected), output_format: pdf, input: "upload_source", main_file: "document.tex"
+   - Rationale: CloudConvert supports zipped LaTeX projects if main_file is specified; this mirrors Overleaf packaging.
+
+3) Zip with convert archive->pdf and explicit engine
+   - Tasks:
+     - upload_source: import/base64 of bundle.zip
+     - convert_pdf: operation convert, input_format: zip, output_format: pdf, input: "upload_source", engine: pdflatex, main_file: document.tex
+   - Rationale: Some accounts accept zip->pdf with LaTeX engine; previous errors implied engine unsupported, but on a paid plan it may work.
+
+4) Single import/base64 with \\pdfximage
+   - Inline the logo as base64 in LaTeX:
+     - Use LaTeX’s `\\pdfximage` with an embedded data stream (pdftex supports this). Example snippet:
+       ```
+       \\pdfximage width=0.5\\linewidth { {data:image/png;base64,<BASE64>} }
+       \\def\\dndlogo{\\pdfrefximage\\pdflastximage}
+       ```
+     - Pros: Avoids multi-file packaging; only upload a single .tex.
+     - Cons: Need to inject base64 at runtime; watch TeX memory limits. Must ensure CloudConvert’s engine supports data: URIs (pdftex usually does).
+
+5) Remote logo URL
+   - Host `dndlogo2.png` on a stable HTTPS URL (e.g., GitHub raw or CDN) and reference it in LaTeX via `\\includegraphics{https://.../dndlogo2.png}`.
+   - Pros: Single .tex input; no bundling.
+   - Cons: Requires external fetch; CloudConvert’s sandbox must allow outbound HTTP(S). If blocked, compile fails.
+
+6) Switch engine or format flag
+   - Try `input_format: latex` vs `tex`; try adding `engine: pdflatex` or `engine_version: <supported>` if the account supports it.
+   - Some plans require `engine` for multi-file LaTeX; others reject it. Validate against your CloudConvert account capabilities.
+
+Post-processing logo (add after CloudConvert PDF)
+------------------------------------------------
+If CloudConvert won’t accept embedded assets, compile without logo, then stamp the logo onto the first page locally or via another service.
+
+7) Local PDF stamping (preferred fallback)
+   - Use a PDF library (e.g., pdf-lib, qpdf + ghostscript, or a tiny Node lib) to:
+     - Load the CloudConvert PDF (base64).
+     - Render page 1, place the PNG at desired coords (e.g., centered at top with width=50% page width).
+     - Save modified PDF and return as base64 to the client.
+   - Pros: Fully under our control; no CloudConvert asset handling.
+   - Cons: Adds a post-step in the API route; must choose a Node-friendly PDF lib (pdf-lib is pure JS).
+
+8) Canvas-based stamping in-browser
+   - On the client, after receiving the PDF base64:
+     - Use `pdf-lib` in the browser or PDF.js + canvas to draw the logo onto page 1, then export new PDF blob.
+   - Pros: Offloads work to client; avoids server changes.
+   - Cons: Larger client bundle; more memory/CPU in browser.
+
+9) Second pass through another API
+   - Keep CloudConvert for LaTeX→PDF; then send the PDF + logo to another service (e.g., a simple image stamper or a lightweight Vercel/Cloudflare function) that merges the logo on page 1.
+   - Pros: Isolates the logo step; CloudConvert stays unchanged.
+   - Cons: Adds another network hop and dependency.
+
+Other considerations / diagnostics
+----------------------------------
+- Verify CloudConvert plan supports LaTeX with multiple inputs or zip; the contract generator likely sends single .tex without assets.
+- Test minimal multi-input job via curl/postman: tiny `\\documentclass{article}\\begin{document}Hi\\end{document}` plus logo; compare error.
+- If engine is required on your plan, set `engine: pdflatex` and `main_file: document.tex`; if rejected, remove engine.
+- If outbound HTTP is allowed, remote URL for the logo is the simplest fix (option 5).
+- If asset bundling remains blocked, post-stamp (option 7) is the safest path to a logo’d PDF.
+
+Recommendation order to try
+---------------------------
+1) Remote logo URL in LaTeX (no bundling): host dndlogo2.png at HTTPS; update LaTeX to use that URL and compile via CloudConvert.
+2) Multi-input with main_file: upload_tex + upload_logo, convert tex→pdf, set main_file/filename.
+3) Zip + main_file with latex input_format; if needed, add engine on supported plan.
+4) Inline base64 via \\pdfximage to avoid extra inputs.
+5) If CloudConvert still fails with assets, compile without logo and post-stamp using pdf-lib server-side (or client-side) before returning the PDF.
